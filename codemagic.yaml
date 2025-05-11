@@ -1,0 +1,40 @@
+workflows:
+  android-app:
+    name: Android App Build
+    instance_type: mac_mini_m1
+    environment:
+      android_signing:
+        - keystore_reference
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: "com.example.thankyouapp"
+        GOOGLE_PLAY_TRACK: internal
+    scripts:
+      - name: Set up local properties
+        script: echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Build Android app
+        script: |
+          ./gradlew assembleRelease
+      - name: Run tests
+        script: |
+          ./gradlew test
+      - name: Build debug APK
+        script: |
+          ./gradlew assembleDebug
+    artifacts:
+      - app/build/outputs/apk/release/app-release.apk
+      - app/build/outputs/apk/debug/app-debug.apk
+      - app/build/outputs/bundle/release/app-release.aab
+      - app/build/reports
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: true
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: $GOOGLE_PLAY_TRACK
+        submit_as_draft: true
